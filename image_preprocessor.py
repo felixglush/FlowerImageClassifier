@@ -46,15 +46,29 @@ def process_image(image):
     ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
         returns an Numpy array
     '''
-    new_width, new_height = 256, 256
-    crop_width, crop_height = 224, 224
-    left = (new_width - crop_width) / 2
-    top = (new_height - crop_height) / 2
-    right = (new_width + crop_width) /2
-    bottom = (new_height + crop_height) / 2
-    means, stds = np.array([0.485, 0.456, 0.406]), np.array([0.229, 0.224, 0.225])
+    # Process a PIL image for use in a PyTorch model
     
-    image = image.resize((new_width, new_height))
+    # resize image preserving aspect ratio
+    width, height = image.size # original size
+    size = 256, 256 # new size
+    if width > height:
+        ratio = float(width) / float(height)
+        new_width = ratio * size[1]
+        image = image.resize((int(floor(new_width)), size[1]), Image.ANTIALIAS)
+    else:
+        ## Calculate for the other case
+        ratio = float(height) / float(width) 
+        new_height = ratio * size[0]
+        image = image.resize((size[0], int(floor(new_height))), Image.ANTIALIAS)
+    
+    width, height = image.size        
+    crop_width, crop_height = 224, 224
+    left = width // 2 - crop_width / 2
+    top = height // 2 - crop_height / 2
+    right = width // 2 + crop_width / 2
+    bottom = height // 2 + crop_height / 2
+    
+    means, stds = np.array([0.485, 0.456, 0.406]), np.array([0.229, 0.224, 0.225])
     image = image.crop((left, top, right, bottom))
     
     np_image = np.array(image)
@@ -62,4 +76,3 @@ def process_image(image):
     np_image_norm = (np_image_scaled - means) / stds
     processed_img = np_image_norm.transpose((2,0,1))
     return processed_img
-    
